@@ -364,6 +364,41 @@ public class Interpreter {
                 return true;
             }
 
+            case OP_CHECKMULTISIGVERIFY ->
+            {
+                byte[] nBytes = stack.pop();
+                if (nBytes == null) return false;
+                int n = Byte.toUnsignedInt(nBytes[0]);
+                List<byte[]> pubKeys = new ArrayList<>();
+                for (int i = 0; i < n; i++) {
+                    byte[] pub = stack.pop();
+                    if (pub == null) return false;
+                    pubKeys.add(pub);
+                }
+                byte[] mBytes = stack.pop();
+                if (mBytes == null) return false;
+                int m = Byte.toUnsignedInt(mBytes[0]);
+                List<byte[]> sigs = new ArrayList<>();
+                for (int i = 0; i < m; i++) {
+                    byte[] sig = stack.pop();
+                    if (sig == null) return false;
+                    sigs.add(sig);
+                }
+                int valid = 0;
+                for (byte[] sig : sigs) {
+                    for (byte[] pub : pubKeys) {
+                        if (sig[0] == pub[0]) { // simulación
+                            valid++;
+                            break;
+                        }
+                    }
+                }
+                if (valid < m) {
+                    return false; // VERIFY falla
+                }
+                return true; // éxito sin empujar nada
+            }
+
             default -> {
                 return false;
             }
