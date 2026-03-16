@@ -1,32 +1,50 @@
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class Interpreter {
 
     private Collection<byte[]> stack;
+    private Collection<Boolean> executionStack = new PilaArrayList<>();
 
     public Interpreter(Collection<byte[]> stack) {
         this.stack = stack;
     }
 
     public boolean execute(List<Token> tokens) {
-
         for (Token token : tokens) {
-
-            if (token.getType() == TokenType.DATA) {
-                stack.push(token.getData());
+            boolean executing = true;
+            Collection<Boolean> temp = new PilaArrayList<>();
+            while (!executionStack.isEmpty()) {
+                Boolean b = executionStack.pop();
+                temp.push(b);
+                if (!b) executing = false;
             }
-
+            while (!temp.isEmpty()) {
+                executionStack.push(temp.pop());
+            }
+            if (token.getType() == TokenType.DATA) {
+                if (executing) {
+                    stack.push(token.getData());
+                }
+            }
             else if (token.getType() == TokenType.OPCODE) {
-                boolean ok = executeOpCode(token.getOpCode());
+                OpCode op = token.getOpCode();
+                if (!executing &&
+                    op != OpCode.OP_IF &&
+                    op != OpCode.OP_NOTIF &&
+                    op != OpCode.OP_ELSE &&
+                    op != OpCode.OP_ENDIF) {
+                    continue;
+                }
+                boolean ok = executeOpCode(op);
                 if (!ok) {
                     return false; // falla inmediata
                 }
             }
         }
-
         // criterio de éxito
         byte[] result = stack.peek();
         return result != null && result.length != 0 && !(result.length == 1 && result[0] == 0);
@@ -185,6 +203,39 @@ public class Interpreter {
                 return true;
             }
 
+            case OP_IF -> 
+            {
+                byte[] cond = stack.pop();
+                if (cond == null) return false;
+                boolean result = cond.length != 0 && cond[0] != 0;
+                executionStack.push(result);
+                return true;
+            }
+
+            case OP_NOTIF -> 
+            {
+                byte[] cond = stack.pop();
+                if (cond == null) return false;
+                boolean result = cond.length == 0 || cond[0] == 0;
+                executionStack.push(result);
+                return true;
+            }
+
+            case OP_ELSE ->
+            {
+                if (executionStack.isEmpty()) return false;
+                boolean current = executionStack.pop();
+                executionStack.push(!current);
+                return true;
+            }
+
+            case OP_ENDIF ->
+            {
+                if (executionStack.isEmpty()) return false;
+                executionStack.pop();
+                return true;
+            }
+
             case OP_VERIFY -> {
                 byte[] check = stack.pop();
                 if (check == null || check[0] == 0) {
@@ -251,6 +302,39 @@ public class Interpreter {
                 if (sig == null || pub == null) return false;
                 boolean valid = sig[0] == pub[0]; // simulación
                 if (!valid) return false;
+                return true;
+            }
+
+            case OP_CHECKMULTISIG -> 
+            {
+                byte[] nBytes = stack.pop();
+                if (nBytes == null) return false;
+                int n = Byte.toUnsignedInt(nBytes[0]);
+                List<byte[]> pubKeys = new ArrayList<>();
+                for (int i = 0; i < n; i++) {
+                    byte[] pub = stack.pop();
+                    if (pub == null) return false;
+                    pubKeys.add(pub);
+                }
+                byte[] mBytes = stack.pop();
+                if (mBytes == null) return false;
+                int m = Byte.toUnsignedInt(nBytes[0]);
+                List<byte[]> sigs = new ArrayList<>();
+                for (int i = 0; i < m; i++) {
+                    byte[] sig = stack.pop();
+                    if (sig == null) return false;
+                    sigs.add(sig);
+                }
+                int valid = 0;
+                for (byte[] sig : sigs) {
+                    for (byte[] pub : pubKeys) {
+                        if (sig[0] == pub[0]) { // simulación
+                            valid++;
+                            break;
+                        }
+                    }
+                }
+                stack.push(valid >= m ? new byte[]{1} : new byte[]{0});
                 return true;
             }
 

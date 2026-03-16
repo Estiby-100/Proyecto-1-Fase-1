@@ -28,4 +28,9 @@ public class PilaArrayList<T> implements Collection<T> {
         return elements.get(elements.size() - 1);
     }
 
+    @Override
+    public boolean isEmpty(){
+        return elements.isEmpty();
+    }
+
 }
