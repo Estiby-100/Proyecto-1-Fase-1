@@ -1,21 +1,21 @@
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Parses script text into tokens.
+ */
 public class Parser {
 
-    // Convierte un texto completo en lista de Tokens
+    /** Converts full script text into a list of tokens */
     public List<Token> parse(String scriptText) {
         List<Token> tokens = new ArrayList<>();
 
-        // Caso borde: texto vacío
         if (scriptText == null || scriptText.trim().isEmpty()) {
             return tokens;
         }
 
-        // 1) separar por espacios
         String[] parts = scriptText.trim().split("\\s+");
 
-        // 2) convertir cada palabra en Token
         for (String part : parts) {
             tokens.add(parseWord(part));
         }
@@ -23,16 +23,14 @@ public class Parser {
         return tokens;
     }
 
-    // Convierte una palabra individual a Token
+    /** Converts a single word into a token */
     private Token parseWord(String word) {
 
-        // Si empieza con DATA: es dato
         if (word.startsWith("DATA:")) {
             String value = word.substring("DATA:".length());
             return Token.data(decimalToBytes(value));
         }
 
-        // Si no es DATA:, asumimos que debe ser un opcode
         try {
             OpCode op = OpCode.valueOf(word);
             return Token.opcode(op);
@@ -41,11 +39,14 @@ public class Parser {
         }
     }
 
+    /** Converts a decimal string to a byte (0–255) */
     private byte[] decimalToBytes(String decimal) {
         int value = Integer.parseInt(decimal);
+
         if (value < 0 || value > 255) {
-            throw new IllegalArgumentException("Decimal fuera de rango (0-255)");
+            throw new IllegalArgumentException("Decimal out of range (0-255)");
         }
+
         return new byte[]{ (byte) value };
     }
 }

@@ -4,17 +4,30 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Executes a list of tokens using a stack-based model.
+ * Supports arithmetic, logical, control flow, and cryptographic operations.
+ */
 public class Interpreter {
 
     private boolean trace;
     private Collection<byte[]> stack;
     private Collection<Boolean> executionStack = new PilaArrayList<>();
 
+    /**
+     * Creates a new interpreter instance.
+     *
+     * @param stack stack used for execution
+     * @param trace enables debug output if true
+     */
     public Interpreter(Collection<byte[]> stack, boolean trace) {
         this.stack = stack;
         this.trace = trace;
     }
 
+    /**
+     * Prints the current state of the stack.
+     */
     private void printStack() {
         Collection<byte[]> temp = new PilaArrayList<>();
         System.out.print("STACK: [");
@@ -29,6 +42,12 @@ public class Interpreter {
         System.out.println("]");
     }
 
+    /**
+     * Executes a list of tokens.
+     *
+     * @param tokens tokens to execute
+     * @return true if execution succeeds, false otherwise
+     */
     public boolean execute(List<Token> tokens) {
         for (Token token : tokens) {
             if (trace) {
@@ -76,6 +95,12 @@ public class Interpreter {
         return result != null && result.length != 0 && !(result.length == 1 && result[0] == 0);
     }
 
+    /**
+     * Executes a single opcode instruction.
+     *
+     * @param op operation code to execute
+     * @return true if operation succeeds, false otherwise
+     */
     private boolean executeOpCode(OpCode op) {
         switch (op) {
             case OP_FALSE -> {
@@ -405,4 +430,3 @@ public class Interpreter {
         }
     }
 }
-
