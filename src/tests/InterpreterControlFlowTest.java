@@ -2,7 +2,13 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.Collection;
 
-public class InterpreterControlFlowTest extends InterpreterTestBase {
+public class InterpreterControlFlowTest {
+
+    private boolean run(String script) {
+        Collection<byte[]> stack = new PilaArrayList<>();
+        Interpreter interp = new Interpreter(stack, false);
+        return interp.execute(new Parser().parse(script));
+    }
 
     @Test
     void opIf() {

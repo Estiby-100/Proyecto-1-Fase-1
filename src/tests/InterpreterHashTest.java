@@ -2,9 +2,15 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import java.security.MessageDigest;
 import java.util.Collection;
-import java.util.Arrays;
 
-public class InterpreterHashTest extends InterpreterTestBase {
+public class InterpreterHashTest {
+
+    private Collection<byte[]> runAndGetStack(String script) {
+        Collection<byte[]> stack = new PilaArrayList<>();
+        Interpreter interp = new Interpreter(stack, false);
+        interp.execute(new Parser().parse(script));
+        return stack;
+    }
 
     @Test
     void opSha256_correctHash() throws Exception {
@@ -16,12 +22,9 @@ public class InterpreterHashTest extends InterpreterTestBase {
     @Test
     void opHash256_doubleSha() throws Exception {
         Collection<byte[]> stack = runAndGetStack("DATA:5 OP_HASH256");
-
         MessageDigest sha = MessageDigest.getInstance("SHA-256");
-        byte[] first = sha.digest(new byte[]{5});
-        byte[] second = sha.digest(first);
-
-        assertArrayEquals(second, stack.peek());
+        byte[] expected = sha.digest(sha.digest(new byte[]{5}));
+        assertArrayEquals(expected, stack.peek());
     }
 
     @Test
